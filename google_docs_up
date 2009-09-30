@@ -1,0 +1,72 @@
+#!/usr/bin/env python2.5
+# -*- python -*-
+import gdata.docs.service
+import sys, os
+
+# Create a client class which will make HTTP requests with Google Docs server.
+client = gdata.docs.service.DocsService()
+# Authenticate using your Google Docs email address and password.
+client.ClientLogin('your@gmail.account', 'PASSWORD')
+
+# Upload Specified File
+filepath = sys.argv[1]
+filename = filepath.split("/")[-1]
+# Determine FILETYPES
+suffix = filename.split(".")[-1].lower()
+ft = None
+uploadfunc = None
+is_upload = True
+
+"""
+{
+    'RTF': 'application/rtf',
+    'PPT': 'application/vnd.ms-powerpoint',
+    'ZIP': 'application/zip',
+    'DOC': 'application/msword',
+    'HTM': 'text/html',
+    'ODS': 'application/x-vnd.oasis.opendocument.spreadsheet',
+    'ODT': 'application/vnd.oasis.opendocument.text',
+    'TXT': 'text/plain',
+    'SWF': 'application/x-shockwave-flash',
+    'PPS': 'application/vnd.ms-powerpoint',
+    'HTML': 'text/html',
+    'TAB': 'text/tab-separated-values',
+    'SXW': 'application/vnd.sun.xml.writer',
+    'TSV': 'text/tab-separated-values',
+    'PDF': 'application/pdf',
+    'CSV': 'text/csv',
+    'XLS': 'application/vnd.ms-excel',
+    'PNG': 'image/png'
+}
+"""
+
+
+uploadfunc = client.Upload
+if suffix in ('doc', 'docx'):
+    ft = 'DOC'
+elif suffix in ('xls', 'xlsx'):
+    ft = 'XLS'
+elif suffix in ('ppt', 'pptx'):
+    ft = 'PPT'
+elif suffix == 'pdf':
+    ft = 'PDF'
+else:
+    is_upload = False
+    print "Unknown suffix. Don't upload"
+
+if is_upload:
+    print (filepath, filename, suffix)
+
+    ms = gdata.MediaSource(file_path=filepath , content_type=gdata.docs.service.SUPPORTED_FILETYPES[ft])
+    entry = uploadfunc(media_source=ms, title=filename)
+    print 'Document now accessible online at:', entry.GetAlternateLink().href
+
+
+print "Current Documents list: \n"
+# Query the server for an Atom feed containing a list of your documents.
+documents_feed = client.GetDocumentListFeed()
+# Loop through the feed and extract each document entry.
+for document_entry in documents_feed.entry:
+    # Display the title of the document on the command line.
+    print document_entry.title.text
+
