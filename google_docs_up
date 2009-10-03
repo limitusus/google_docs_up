@@ -12,56 +12,57 @@ client.ClientLogin('your@gmail.account', 'PASSWORD')
 filepath = sys.argv[1]
 filename = filepath.split("/")[-1]
 # Determine FILETYPES
-suffix = filename.split(".")[-1].lower()
+suffix = filename.split(".")[-1].upper()
 ft = None
 uploadfunc = None
-is_upload = True
 
 """
-{
-    'RTF': 'application/rtf',
-    'PPT': 'application/vnd.ms-powerpoint',
-    'ZIP': 'application/zip',
-    'DOC': 'application/msword',
-    'HTM': 'text/html',
-    'ODS': 'application/x-vnd.oasis.opendocument.spreadsheet',
-    'ODT': 'application/vnd.oasis.opendocument.text',
-    'TXT': 'text/plain',
-    'SWF': 'application/x-shockwave-flash',
-    'PPS': 'application/vnd.ms-powerpoint',
-    'HTML': 'text/html',
-    'TAB': 'text/tab-separated-values',
-    'SXW': 'application/vnd.sun.xml.writer',
-    'TSV': 'text/tab-separated-values',
-    'PDF': 'application/pdf',
-    'CSV': 'text/csv',
-    'XLS': 'application/vnd.ms-excel',
-    'PNG': 'image/png'
-}
+SUPPORTED_FILETYPES = {
+  'CSV': 'text/csv',
+  'TSV': 'text/tab-separated-values',
+  'TAB': 'text/tab-separated-values',
+  'DOC': 'application/msword',
+  'DOCX': ('application/vnd.openxmlformats-officedocument.'
+           'wordprocessingml.document'),
+  'ODS': 'application/x-vnd.oasis.opendocument.spreadsheet',
+  'ODT': 'application/vnd.oasis.opendocument.text',
+  'RTF': 'application/rtf',
+  'SXW': 'application/vnd.sun.xml.writer',
+  'TXT': 'text/plain',
+  'XLS': 'application/vnd.ms-excel',
+  'XLSX': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'PDF': 'application/pdf',
+  'PNG': 'image/png',
+  'PPT': 'application/vnd.ms-powerpoint',
+  'PPS': 'application/vnd.ms-powerpoint',
+  'HTM': 'text/html',
+  'HTML': 'text/html',
+  'ZIP': 'application/zip',
+  'SWF': 'application/x-shockwave-flash'
+  }
 """
 
-
+ft = suffix
 uploadfunc = client.Upload
-if suffix in ('doc', 'docx'):
-    ft = 'DOC'
-elif suffix in ('xls', 'xlsx'):
-    ft = 'XLS'
-elif suffix in ('ppt', 'pptx'):
+
+# Filetype Exceptions
+if suffix in ('PPTX'):
     ft = 'PPT'
-elif suffix == 'pdf':
-    ft = 'PDF'
-else:
-    is_upload = False
-    print "Unknown suffix. Don't upload"
 
-if is_upload:
-    print (filepath, filename, suffix)
+print "Filetype: %s" % (ft)
+if ft not in gdata.docs.service.SUPPORTED_FILETYPES :
+    print "Filetype %s not supported in Google Docs." % (ft)
+    sys.exit(1)
 
-    ms = gdata.MediaSource(file_path=filepath , content_type=gdata.docs.service.SUPPORTED_FILETYPES[ft])
-    entry = uploadfunc(media_source=ms, title=filename)
-    print 'Document now accessible online at:', entry.GetAlternateLink().href
+# Execute Upload
+print (filepath, filename, suffix)
 
+ms = gdata.MediaSource(file_path=filepath , content_type=gdata.docs.service.SUPPORTED_FILETYPES[ft])
+entry = uploadfunc(media_source=ms, title=filename)
+print 'Document now accessible online at:\n'
+print ' %s\n' % (entry.GetAlternateLink().href)
 
+# Print List
 print "Current Documents list: \n"
 # Query the server for an Atom feed containing a list of your documents.
 documents_feed = client.GetDocumentListFeed()
